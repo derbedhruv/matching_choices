@@ -11,7 +11,7 @@ ALGORITHM:
 
 EDGE CASES:
 - if someone enters multiple choices, take the one with the latest timestamp
-
+- if someone has not entered all 5 grader choices or all 3 exclusion choices
 """
 import pandas
 
@@ -30,13 +30,17 @@ FIRST_EXCLUSION_TEXT = "First team you want EXCLUDED"
 SECOND_EXCLUSION_TEXT = "Second team you want EXCLUDED"
 THIRD_EXCLUSION_TEXT = "Third team you want EXCLUDED"
 
-GRADERS_LIST = []
+SUID = 'What is your SUID?'
+
+GRADERS = {}	# this is a list of the choices for graders
+# mapping grader strings => {"students" : list of students, "limit": the upper limit of the number of students they can take}
 
 # read in data
 data = pandas.read_csv(CSV_NAME)
 
 # OPTION 1: randomize 
-data = data.sample(frac=1).reset_index(drop=True)
+# ref: https://stackoverflow.com/questions/29576430/shuffle-dataframe-rows
+data = data.sample(frac=1).reset_index(drop=True)	
 
 # OPTION 2: go in existing order (first-come first-served)
 # in this case, comment out previous line
@@ -46,4 +50,17 @@ data = data.sample(frac=1).reset_index(drop=True)
 # allotted to certain grading teams, then they can be entered here
 
 for index, row in df.iterrows():
+	choice_index = 0	# pointer for their choice index
+	while(pandas.isnull(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]) and len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) >= GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]):
+		# keep incrementing till you have a grader with spots left
+		choice_index += 1
+	if choice_index < 5:
+		# one of their first 5 choices still has a spot
+		# assign to them, finish
+		GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append(row[SUID])
+		continue
+	# if you've reached here, that means none of the top 5 choices had any spots left
+	# create a set of the remaining graders, exclude the ones the student doesn't want
+	# assign to one of the remaining graders who still has spots open
+	REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in [GRADERS[row[GRADER_CHOICE_LIST[j]]] for j in range(5)]])
 
