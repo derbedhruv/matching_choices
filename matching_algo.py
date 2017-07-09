@@ -43,7 +43,7 @@ EXCLUDED_GRADERS_LIST = [FIRST_EXCLUSION_TEXT, SECOND_EXCLUSION_TEXT, THIRD_EXCL
 SUID = "What is your SUID?"
 STUDENT_NAME = "What is your name?"
 
-DEFAULT_STUDENT_LIMIT = 5 # the default limit on the number of students for a particular grader team
+DEFAULT_STUDENT_LIMIT = 3 # the default limit on the number of students for a particular grader team
 
 # this is a list of the choices for graders, MUST BE FILLED BEFOREHAND
 # mapping grader strings => {"students" : list of students, "limit": the upper limit of the number of students they can take}
@@ -116,7 +116,7 @@ for index, row in data.iterrows():
 		# log([index, ".", row[STUDENT_NAME], "will have to have some random grader assigned!"])
 
 		EXCLUDED_GRADERS = [GRADERS[row[EXCLUDED_GRADERS_LIST[j]]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])]
-		EXCLUDED_GRADERS += [grader for grader in GRADERS if len(GRADERS[grader]["students"]) > GRADERS[grader]["limit"]]
+		EXCLUDED_GRADERS += [grader for grader in GRADERS if len(GRADERS[grader]["students"]) == GRADERS[grader]["limit"]]
 		# log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
 		# log(["no of exclusions specified:", len(EXCLUDED_GRADERS)])
 
