@@ -78,9 +78,6 @@ for index, row in data.iterrows():
 	# iterate over the choices specified
 	# and see if you still have spots left
 	while choice_index < NUMBER_OF_CHOICES_SPECIFIED:
-		if pandas.isnull(row[GRADER_CHOICE_LIST[choice_index]]):
-			break
-
 		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) >= GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
 			# keep incrementing till you have a grader with spots left
 			choice_index += 1
