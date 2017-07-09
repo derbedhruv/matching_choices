@@ -13,7 +13,8 @@ EDGE CASES:
 - if someone enters multiple choices, take the one with the latest timestamp
 - if someone has not entered all 5 grader choices or all 3 exclusion choices
 """
-import pandas, random
+import pandas, random, os
+from openpyxl import Workbook
 
 ## DEBUGGING, PRINT VERBOSE STATEMENTS ###############
 VERBOSE = False
@@ -25,6 +26,7 @@ def log(message):
 		print ' '.join([str(m) for m in message])
 
 CSV_NAME = "2016_grading_preferences.csv"		# change to whatever's appropriate
+OUTPUT_FILENAME = 'E145_grader_assignments.xlsx'
 
 # column names - these will be keys for the pandas dataframe
 FIRST_CHOICE_TEXT = "Who is your first choice pair for PBP graders?"
@@ -147,4 +149,14 @@ for grader in GRADERS.keys():
 	current_count = len(GRADERS[grader]["students"])
 	print grader, ":", current_count
 
+# write out to workbook
+wb = Workbook()
 
+for grader in GRADERS.keys():
+	# create new sheet
+	ws = wb.create_sheet(grader)
+	ws.title = grader
+	
+
+wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME))
+print "Succesfully written assignments to", OUTPUT_FILENAME
