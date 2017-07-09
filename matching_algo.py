@@ -38,22 +38,22 @@ DEFAULT_STUDENT_LIMIT = 20 # the default limit on the number of students for a p
 # this is a list of the choices for graders, MUST BE FILLED BEFOREHAND
 # mapping grader strings => {"students" : list of students, "limit": the upper limit of the number of students they can take}
 GRADERS = {
-	"Team 1: Tom and Griffin" : {},
-	"Team 2: Tom and Gautam" : {},
-	"Team 3: Tom and Sarah" : {},
-	"Team 4: Rebeca and Griffin" : {},
-	"Team 5: Rebeca and Gautam" : {},
-	"Team 6: Rebeca and Sarah" : {},
-	"Team 7: Griffin and Gautam" : {},
-	"Team 8: Griffin and Sarah" : {},
-	"Team 9: Gautam and Sarah" : {},
-	"Team 10: AnnaMaria Konya Tannon and Roxana Dantes" : {},
-	"Team 11: Wilson Farrar and Griffin" : {},
-	"Team 12: Wilson Farrar and Gautam" : {},
-	"Team 13: Wilson Farrar and Sarah" : {},
-	"Team 14: Yusuf Celik and Griffin" : {},
-	"Team 15: Yusuf Celik and Gautam" : {},
-	"Team 16: Yusuf Celik and Sarah" : {}
+	"Team 1: Tom and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 2: Tom and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 3: Tom and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 4: Rebeca and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 5: Rebeca and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 6: Rebeca and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 7: Griffin and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 8: Griffin and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 9: Gautam and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 10: AnnaMaria Konya Tannon and Roxana Dantes" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 11: Wilson Farrar and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 12: Wilson Farrar and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 13: Wilson Farrar and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 14: Yusuf Celik and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 15: Yusuf Celik and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
+	"Team 16: Yusuf Celik and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT}
 }
 
 # read in data
