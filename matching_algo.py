@@ -70,18 +70,29 @@ data = data.sample(frac=1).reset_index(drop=True)
 # In the case that some students have been preferentially
 # allotted to certain grading teams, then they can be entered here
 
-for index, row in df.iterrows():
+for index, row in data.iterrows():
 	choice_index = 0	# pointer for their choice index
 	while(not pandas.isnull(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]) and len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) >= GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]):
 		# keep incrementing till you have a grader with spots left
 		choice_index += 1
+	
 	if choice_index < 5:
 		# one of their first 5 choices still has a spot
-		# assign to them, finish
-		GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append(row[SUID])
+		# assign to this grader team and continue to next student (row)
+		GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
 		continue
+
 	# if you've reached here, that means none of the top 5 choices had any spots left
 	# create a set of the remaining graders, exclude the ones the student doesn't want
 	# assign to one of the remaining graders who still has spots open
+	print index, ".", row[STUDENT_NAME], "will have to have some random grader assigned!"
 	REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in [GRADERS[row[GRADER_CHOICE_LIST[j]]] for j in range(5)]])
 
+print "compelted assignments! Here's the count:"
+total = 0
+for grader in GRADERS.keys():
+	current_count = len(GRADERS[grader]["students"])
+	total += current_count
+	print grader, ":", current_count
+
+print "total students =", total
