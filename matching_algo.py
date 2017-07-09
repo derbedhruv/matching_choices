@@ -33,7 +33,7 @@ THIRD_EXCLUSION_TEXT = "Third team you want EXCLUDED"
 SUID = "What is your SUID?"
 STUDENT_NAME = "What is your name?"
 
-DEFAULT_STUDENT_LIMIT = 20 # the default limit on the number of students for a particular grader team
+DEFAULT_STUDENT_LIMIT = 5 # the default limit on the number of students for a particular grader team
 
 # this is a list of the choices for graders, MUST BE FILLED BEFOREHAND
 # mapping grader strings => {"students" : list of students, "limit": the upper limit of the number of students they can take}
@@ -72,8 +72,13 @@ data = data.sample(frac=1).reset_index(drop=True)
 
 for index, row in data.iterrows():
 	choice_index = 0	# pointer for their choice index
-	while(choice_index < len(GRADER_CHOICE_LIST)):
-		if pandas.isnull(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]):
+	NUMBER_OF_CHOICES_SPECIFIED = sum([1 for choice in range(len(GRADER_CHOICE_LIST)) if not pandas.isnull(GRADER_CHOICE_LIST[choice])])	# number of choices this student has specified, upto a max possible of 5
+
+	# while you still have specified choices left, 
+	# iterate over the choices specified
+	# and see if you still have spots left
+	while choice_index < NUMBER_OF_CHOICES_SPECIFIED:
+		if pandas.isnull(row[GRADER_CHOICE_LIST[choice_index]]):
 			break
 
 		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) >= GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
@@ -84,7 +89,7 @@ for index, row in data.iterrows():
 
 	
 	if choice_index < len(GRADER_CHOICE_LIST):
-		# one of their first 5 choices still has a spot
+		# one of their first 5 choices still has a spot OR they only specified until this limit
 		# assign to this grader team and continue to next student (row)
 		GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
 		continue
