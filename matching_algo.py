@@ -15,6 +15,14 @@ EDGE CASES:
 """
 import pandas
 
+## DEBUGGING, PRINT VERBOSE STATEMENTS
+VERBOSE = False
+
+def log(message):
+	# print this out only if VERBOSE == True
+	if VERBOSE:
+		print ' '.join([str(m) for m in message])
+
 CSV_NAME = "2016_grading_preferences.csv"		# change to whatever's appropriate
 
 # column names - these will be keys for the pandas dataframe
@@ -29,6 +37,8 @@ GRADER_CHOICE_LIST = [FIRST_CHOICE_TEXT, SECOND_CHOICE_TEXT, THIRD_CHOICE_TEXT, 
 FIRST_EXCLUSION_TEXT = "First team you want EXCLUDED"
 SECOND_EXCLUSION_TEXT = "Second team you want EXCLUDED"
 THIRD_EXCLUSION_TEXT = "Third team you want EXCLUDED"
+
+EXCLUDED_GRADERS_LIST = [FIRST_EXCLUSION_TEXT, SECOND_EXCLUSION_TEXT, THIRD_EXCLUSION_TEXT]
 
 SUID = "What is your SUID?"
 STUDENT_NAME = "What is your name?"
@@ -72,32 +82,47 @@ data = data.sample(frac=1).reset_index(drop=True)
 
 for index, row in data.iterrows():
 	choice_index = 0	# pointer for their choice index
-	NUMBER_OF_CHOICES_SPECIFIED = sum([1 for choice in range(len(GRADER_CHOICE_LIST)) if not pandas.isnull(GRADER_CHOICE_LIST[choice])])	# number of choices this student has specified, upto a max possible of 5
+	assignment_completed = False	# used to check if this student was assigned preferred grader. If not, 
+	NUMBER_OF_CHOICES_SPECIFIED = sum([1 for j in range(len(GRADER_CHOICE_LIST)) if not pandas.isnull(row[GRADER_CHOICE_LIST[j]])])	# number of choices this student has specified, upto a max possible of 5
 
 	# while you still have specified choices left, 
 	# iterate over the choices specified
 	# and see if you still have spots left
 	while choice_index < NUMBER_OF_CHOICES_SPECIFIED:
-		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) >= GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
-			# keep incrementing till you have a grader with spots left
-			choice_index += 1
-		else:
+		if pandas.isnull(row[GRADER_CHOICE_LIST[choice_index]]):
+			# if this choice is null, we've reached the end of the choices. leave the loop.
 			break
 
-	
-	if choice_index < len(GRADER_CHOICE_LIST):
-		# one of their first 5 choices still has a spot OR they only specified until this limit
-		# assign to this grader team and continue to next student (row)
-		GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
-		continue
+		# keep incrementing till you have a grader with spots left
+		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) > GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
+			# this grader goes NOT have spots left. Try next.
+			choice_index += 1
+		else:
+			# this grader HAS spots left. assign to this, and move onto next student.
+			GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
 
-	# if you've reached here, that means none of the top 5 choices had any spots left
-	# create a set of the remaining graders, exclude the ones the student doesn't want
-	# assign to one of the remaining graders who still has spots open
-	print index, ".", row[STUDENT_NAME], "will have to have some random grader assigned!"
-	REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in [GRADERS[row[GRADER_CHOICE_LIST[j]]] for j in range(5)]])
+			log(["Assigned", index, ".", row[STUDENT_NAME], "to grader", row[GRADER_CHOICE_LIST[choice_index]]])
+			assignment_completed = True
+			break
 
-print "compelted assignments! Here's the count:"
+	if not assignment_completed:
+		# if you've reached here, that means none of the top 5 choices had any spots left
+		# create a set of the remaining graders, excluding:
+		# 1. the ones the student doesn't want
+		# 2. the ones who don't have spots left
+		# 
+		# assign randomly to one of these.
+
+		log([index, ".", row[STUDENT_NAME], "will have to have some random grader assigned!"])
+
+		EXCLUDED_GRADERS = [GRADERS[row[EXCLUDED_GRADERS_LIST[j]]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])]
+		EXCLUDED_GRADERS += [grader for grader in GRADERS if len(GRADERS[grader]["students"]) > GRADERS[grader]["limit"]]
+		log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
+		log(["no of exclusions specified:", len(EXCLUDED_GRADERS)])
+
+		REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in EXCLUDED_GRADERS])
+
+print "COMPLETED ASSIGNMENTS! Here's the count:"
 total = 0
 for grader in GRADERS.keys():
 	current_count = len(GRADERS[grader]["students"])
