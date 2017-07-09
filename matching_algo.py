@@ -15,8 +15,9 @@ EDGE CASES:
 """
 import pandas, random
 
-## DEBUGGING, PRINT VERBOSE STATEMENTS
-VERBOSE = True
+## DEBUGGING, PRINT VERBOSE STATEMENTS ###############
+VERBOSE = False
+######################################################
 
 def log(message):
 	# print this out only if VERBOSE == True
@@ -43,7 +44,7 @@ EXCLUDED_GRADERS_LIST = [FIRST_EXCLUSION_TEXT, SECOND_EXCLUSION_TEXT, THIRD_EXCL
 SUID = "What is your SUID?"
 STUDENT_NAME = "What is your name?"
 
-DEFAULT_STUDENT_LIMIT = 3 # the default limit on the number of students for a particular grader team
+DEFAULT_STUDENT_LIMIT = 4 # the default limit on the number of students for a particular grader team
 
 # this is a list of the choices for graders, MUST BE FILLED BEFOREHAND
 # mapping grader strings => {"students" : list of students, "limit": the upper limit of the number of students they can take}
@@ -66,6 +67,10 @@ GRADERS = {
 	"Team 16: Yusuf Celik and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT}
 }
 
+STUDENTS_WHO_GOT_THEIR_CHOICES = 0
+STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED = 0
+TOTAL_STUDENTS = 0
+
 # read in data
 data = pandas.read_csv(CSV_NAME)
 
@@ -81,6 +86,8 @@ data = data.sample(frac=1).reset_index(drop=True)
 # allotted to certain grading teams, then they can be entered here
 
 for index, row in data.iterrows():
+	TOTAL_STUDENTS += 1
+	
 	choice_index = 0	# pointer for their choice index
 	assignment_completed = False	# used to check if this student was assigned preferred grader. If not, 
 	NUMBER_OF_CHOICES_SPECIFIED = sum([1 for j in range(len(GRADER_CHOICE_LIST)) if not pandas.isnull(row[GRADER_CHOICE_LIST[j]])])	# number of choices this student has specified, upto a max possible of 5
@@ -97,6 +104,7 @@ for index, row in data.iterrows():
 		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) < GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
 			# this grader HAS spots left. assign to this, and move onto next student.
 			GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
+			STUDENTS_WHO_GOT_THEIR_CHOICES += 1
 
 			log(["Assigned", index, ".", row[STUDENT_NAME], "to grader", row[GRADER_CHOICE_LIST[choice_index]]])
 			assignment_completed = True
@@ -125,13 +133,18 @@ for index, row in data.iterrows():
 		# choose one of the remaining graders randomly, and assign
 		RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
 		GRADERS[RANDOMLY_CHOSEN_GRADER]["students"].append((row[SUID], row[STUDENT_NAME]))
+		STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED += 1
 		log(["RANDOMLY Assigned", index, ".", row[STUDENT_NAME], "to grader", RANDOMLY_CHOSEN_GRADER])
 
-print "COMPLETED ASSIGNMENTS! Here's the count:"
-total = 0
+print "COMPLETED ASSIGNMENTS! Here's the overview:"
+print "------------------------------------------------"
+print "Total students =", TOTAL_STUDENTS
+print "Students who got one of their choices =", STUDENTS_WHO_GOT_THEIR_CHOICES
+print "Students who did not get any of their choices =", STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED
+print "------------------------------------------------"
+print "GRADER ASSIGNMENT COUNTS:"
 for grader in GRADERS.keys():
 	current_count = len(GRADERS[grader]["students"])
-	total += current_count
 	print grader, ":", current_count
 
-print "total students =", total
+
