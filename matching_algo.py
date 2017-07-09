@@ -154,9 +154,9 @@ wb = Workbook()
 
 for grader in GRADERS.keys():
 	# create new sheet
-	ws = wb.create_sheet(grader)
-	ws.title = grader
-	
+	ws = wb.create_sheet(title=grader.replace(':', '-'))
+	for student in GRADERS[grader]["students"]:
+		ws.append(student)
 
 wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME))
 print "Succesfully written assignments to", OUTPUT_FILENAME
