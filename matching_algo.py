@@ -72,11 +72,18 @@ data = data.sample(frac=1).reset_index(drop=True)
 
 for index, row in data.iterrows():
 	choice_index = 0	# pointer for their choice index
-	while(not pandas.isnull(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]) and len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) >= GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]):
-		# keep incrementing till you have a grader with spots left
-		choice_index += 1
+	while(choice_index < len(GRADER_CHOICE_LIST)):
+		if pandas.isnull(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]):
+			break
+
+		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) >= GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
+			# keep incrementing till you have a grader with spots left
+			choice_index += 1
+		else:
+			break
+
 	
-	if choice_index < 5:
+	if choice_index < len(GRADER_CHOICE_LIST):
 		# one of their first 5 choices still has a spot
 		# assign to this grader team and continue to next student (row)
 		GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
