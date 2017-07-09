@@ -13,10 +13,10 @@ EDGE CASES:
 - if someone enters multiple choices, take the one with the latest timestamp
 - if someone has not entered all 5 grader choices or all 3 exclusion choices
 """
-import pandas
+import pandas, random
 
 ## DEBUGGING, PRINT VERBOSE STATEMENTS
-VERBOSE = False
+VERBOSE = True
 
 def log(message):
 	# print this out only if VERBOSE == True
@@ -94,16 +94,16 @@ for index, row in data.iterrows():
 			break
 
 		# keep incrementing till you have a grader with spots left
-		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) > GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
-			# this grader goes NOT have spots left. Try next.
-			choice_index += 1
-		else:
+		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) < GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
 			# this grader HAS spots left. assign to this, and move onto next student.
 			GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
 
 			log(["Assigned", index, ".", row[STUDENT_NAME], "to grader", row[GRADER_CHOICE_LIST[choice_index]]])
 			assignment_completed = True
 			break
+		else:
+			# this grader goes NOT have spots left. Try next.
+			choice_index += 1
 
 	if not assignment_completed:
 		# if you've reached here, that means none of the top 5 choices had any spots left
@@ -113,14 +113,19 @@ for index, row in data.iterrows():
 		# 
 		# assign randomly to one of these.
 
-		log([index, ".", row[STUDENT_NAME], "will have to have some random grader assigned!"])
+		# log([index, ".", row[STUDENT_NAME], "will have to have some random grader assigned!"])
 
 		EXCLUDED_GRADERS = [GRADERS[row[EXCLUDED_GRADERS_LIST[j]]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])]
 		EXCLUDED_GRADERS += [grader for grader in GRADERS if len(GRADERS[grader]["students"]) > GRADERS[grader]["limit"]]
-		log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
-		log(["no of exclusions specified:", len(EXCLUDED_GRADERS)])
+		# log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
+		# log(["no of exclusions specified:", len(EXCLUDED_GRADERS)])
 
 		REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in EXCLUDED_GRADERS])
+
+		# choose one of the remaining graders randomly, and assign
+		RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
+		GRADERS[RANDOMLY_CHOSEN_GRADER]["students"].append((row[SUID], row[STUDENT_NAME]))
+		log(["RANDOMLY Assigned", index, ".", row[STUDENT_NAME], "to grader", RANDOMLY_CHOSEN_GRADER])
 
 print "COMPLETED ASSIGNMENTS! Here's the count:"
 total = 0
