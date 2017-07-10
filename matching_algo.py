@@ -154,7 +154,8 @@ wb = Workbook()
 
 for grader in GRADERS.keys():
 	# create new sheet
-	ws = wb.create_sheet(title=grader.replace(':', '-'))
+	team, grader_names = grader.split(':')
+	ws = wb.create_sheet(title=team)
 	for student in GRADERS[grader]["students"]:
 		ws.append(student)
 
