@@ -158,12 +158,16 @@ for grader in GRADERS.keys():
 
 # write out to workbook
 wb = Workbook()
+ws = wb.active
+wb.remove_sheet(ws)
 
-for grader in GRADERS.keys():
+for grader in sorted(GRADERS.keys(), key=lambda x: int(x.split('Team ')[1].split(':')[0])):
 	# create new sheet
 	team, grader_names = grader.split(':')
 	ws = wb.create_sheet(title=team)
+	ws.append((grader, ))
 	ws.append(("SUID", "STUDENT NAME"))
+
 	for student in GRADERS[grader]["students"]:
 		ws.append(student)
 
