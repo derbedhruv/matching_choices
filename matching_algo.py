@@ -16,14 +16,23 @@ EDGE CASES:
 import pandas, random, os
 from openpyxl import Workbook
 
-## DEBUGGING, PRINT VERBOSE STATEMENTS ###############
-VERBOSE = False
+############## USER-CONTROLLED OPTIONS ###############
+VERBOSE = False		# verbose print what's going on
+RANDOMIZE_STUDENTS = False	# randomize the students before assigning (lottery system)
 ######################################################
 
 def log(message):
 	# print this out only if VERBOSE == True
 	if VERBOSE:
 		print ' '.join([str(m) for m in message])
+
+def assign(student_info, grader):
+	# assign student to grader. 
+	# student_info is the tuple (SUID, STUDENT_NAME)
+	# grader is the grader team name - it should be one of the keys of the GRADER dict
+	assert grader in GRADERS.keys()
+	GRADERS[grader]["students"].append(student_info)
+	log(["Assigned", index, ".", student_info[1], "to grader", grader])
 
 CSV_NAME = "2016_grading_preferences.csv"		# change to whatever's appropriate
 OUTPUT_FILENAME = 'E145_grader_assignments.xlsx'
@@ -78,7 +87,8 @@ data = pandas.read_csv(CSV_NAME)
 
 # OPTION 1: randomize 
 # ref: https://stackoverflow.com/questions/29576430/shuffle-dataframe-rows
-data = data.sample(frac=1).reset_index(drop=True)	
+if RANDOMIZE_STUDENTS:
+	data = data.sample(frac=1).reset_index(drop=True)
 
 # OPTION 2: go in existing order (first-come first-served)
 # in this case, comment out previous line
@@ -105,10 +115,8 @@ for index, row in data.iterrows():
 		# keep incrementing till you have a grader with spots left
 		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) < GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
 			# this grader HAS spots left. assign to this, and move onto next student.
-			GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"].append((row[SUID], row[STUDENT_NAME]))
+			assign((row[SUID], row[STUDENT_NAME]), row[GRADER_CHOICE_LIST[choice_index]])
 			STUDENTS_WHO_GOT_THEIR_CHOICES += 1
-
-			log(["Assigned", index, ".", row[STUDENT_NAME], "to grader", row[GRADER_CHOICE_LIST[choice_index]]])
 			assignment_completed = True
 			break
 		else:
@@ -134,9 +142,8 @@ for index, row in data.iterrows():
 
 		# choose one of the remaining graders randomly, and assign
 		RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
-		GRADERS[RANDOMLY_CHOSEN_GRADER]["students"].append((row[SUID], row[STUDENT_NAME]))
+		assign((row[SUID], row[STUDENT_NAME]), RANDOMLY_CHOSEN_GRADER)
 		STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED += 1
-		log(["RANDOMLY Assigned", index, ".", row[STUDENT_NAME], "to grader", RANDOMLY_CHOSEN_GRADER])
 
 print "COMPLETED ASSIGNMENTS! Here's the overview:"
 print "------------------------------------------------"
@@ -156,7 +163,7 @@ for grader in GRADERS.keys():
 	# create new sheet
 	team, grader_names = grader.split(':')
 	ws = wb.create_sheet(title=team)
-	ws.append(("SUID", "STUDENT_NAME"))
+	ws.append(("SUID", "STUDENT NAME"))
 	for student in GRADERS[grader]["students"]:
 		ws.append(student)
 
