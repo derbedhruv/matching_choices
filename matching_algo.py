@@ -156,6 +156,7 @@ for grader in GRADERS.keys():
 	# create new sheet
 	team, grader_names = grader.split(':')
 	ws = wb.create_sheet(title=team)
+	ws.append(("SUID", "STUDENT_NAME"))
 	for student in GRADERS[grader]["students"]:
 		ws.append(student)
 
