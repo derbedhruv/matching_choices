@@ -4,8 +4,8 @@ A simple script to match students to their choices of graders from a Google Form
 
 # TODO:
 * ~~write out assignments to excel spreadsheet, with separate sheets for each grading team. This can then easily be parsed as a google sheet.~~
-* Handle the case when a user makes multiple entries (only taking the last one)
-* Read the teams and student limits from external file (should not be hardcoded!)
+* ~~Handle the case when a user makes multiple entries (only taking the last one)~~
+* ~~Read the teams and student limits from external file (should not be hardcoded!)~~
 
 # Requirements:
 * Python 2.7
