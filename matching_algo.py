@@ -83,7 +83,7 @@ STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED = 0
 TOTAL_STUDENTS = 0
 
 # read in data
-data = pandas.read_csv(CSV_NAME)
+data = pandas.read_csv(CSV_NAME, parse_dates=["Timestamp"])
 
 # OPTION 1: randomize 
 # ref: https://stackoverflow.com/questions/29576430/shuffle-dataframe-rows
