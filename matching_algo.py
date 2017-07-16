@@ -85,6 +85,10 @@ TOTAL_STUDENTS = 0
 # read in data
 data = pandas.read_csv(CSV_NAME, parse_dates=["Timestamp"])
 
+# only take the last entry by timestamp.
+# group by SUID, take last
+data = data.groupby('What is your SUID?').last().reset_index()
+
 # OPTION 1: randomize 
 # ref: https://stackoverflow.com/questions/29576430/shuffle-dataframe-rows
 if RANDOMIZE_STUDENTS:
