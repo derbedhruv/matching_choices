@@ -19,6 +19,14 @@ from openpyxl import Workbook
 ############## USER-CONTROLLED OPTIONS ###############
 VERBOSE = False		# verbose print what's going on
 RANDOMIZE_STUDENTS = False	# randomize the students before assigning (lottery system)
+
+# DETAILS OF THE FORM
+GRADER_CHOICE_LIST_FILE = "grader_choices_text.txt"
+EXCLUDED_GRADERS_LIST_FILE = "excluded_grader_choices_text.txt"
+GRADER_LIST_FILE = "graders.txt"
+
+CSV_NAME = "sample.csv"		# change to whatever's appropriate
+OUTPUT_FILENAME = 'E145_grader_assignments_test.xlsx'
 ######################################################
 
 def log(message):
@@ -34,23 +42,18 @@ def assign(student_info, grader):
 	GRADERS[grader]["students"].append(student_info)
 	log(["Assigned", index, ".", student_info[1], "to grader", grader])
 
-CSV_NAME = "2016_grading_preferences.csv"		# change to whatever's appropriate
-OUTPUT_FILENAME = 'E145_grader_assignments.xlsx'
+def read_from_file(filename, delimiter=None):
+	# reads a file with a string on each line
+	# returns as a list of strings
+	with open(filename) as f:
+		x = f.readlines()
+	# remove newlines
+	if not delimiter:
+		return [y.strip() for y in x]
+	return [y.strip().split(delimiter) for y in x]
 
-# column names - these will be keys for the pandas dataframe
-FIRST_CHOICE_TEXT = "Who is your first choice pair for PBP graders?"
-SECOND_CHOICE_TEXT = "Who is your second choice?"
-THIRD_CHOICE_TEXT = "Who is your third choice?"
-FOURTH_CHOICE_TEXT = "Who is your fourth choice?"
-FIFTH_CHOICE_TEXT = "Who is your fifth choice?"
-
-GRADER_CHOICE_LIST = [FIRST_CHOICE_TEXT, SECOND_CHOICE_TEXT, THIRD_CHOICE_TEXT, FOURTH_CHOICE_TEXT, FIFTH_CHOICE_TEXT]
-
-FIRST_EXCLUSION_TEXT = "First team you want EXCLUDED"
-SECOND_EXCLUSION_TEXT = "Second team you want EXCLUDED"
-THIRD_EXCLUSION_TEXT = "Third team you want EXCLUDED"
-
-EXCLUDED_GRADERS_LIST = [FIRST_EXCLUSION_TEXT, SECOND_EXCLUSION_TEXT, THIRD_EXCLUSION_TEXT]
+GRADER_CHOICE_LIST = read_from_file(GRADER_CHOICE_LIST_FILE)
+EXCLUDED_GRADERS_LIST = read_from_file(EXCLUDED_GRADERS_LIST_FILE)
 
 SUID = "What is your SUID?"
 STUDENT_NAME = "What is your name?"
@@ -59,24 +62,15 @@ DEFAULT_STUDENT_LIMIT = 4 # the default limit on the number of students for a pa
 
 # this is a list of the choices for graders, MUST BE FILLED BEFOREHAND
 # mapping grader strings => {"students" : list of students, "limit": the upper limit of the number of students they can take}
-GRADERS = {
-	"Team 1: Tom and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 2: Tom and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 3: Tom and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 4: Rebeca and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 5: Rebeca and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 6: Rebeca and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 7: Griffin and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 8: Griffin and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 9: Gautam and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 10: AnnaMaria Konya Tannon and Roxana Dantes" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 11: Wilson Farrar and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 12: Wilson Farrar and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 13: Wilson Farrar and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 14: Yusuf Celik and Griffin" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 15: Yusuf Celik and Gautam" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT},
-	"Team 16: Yusuf Celik and Sarah" : {"students" : [], "limit" : DEFAULT_STUDENT_LIMIT}
-}
+GRADERS_MASTER_LIST = read_from_file(GRADER_LIST_FILE, delimiter=",")
+GRADERS = {}
+
+for g in GRADERS_MASTER_LIST:
+	LIMIT = DEFAULT_STUDENT_LIMIT
+	if len(g) > 1:
+		# the second entry exists, which is the limit for this grader
+		LIMIT = int(g[1])
+	GRADERS[g[0]] = {"students" : [], "limit": LIMIT}
 
 STUDENTS_WHO_GOT_THEIR_CHOICES = 0
 STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED = 0
@@ -156,7 +150,9 @@ print "Students who got one of their choices =", STUDENTS_WHO_GOT_THEIR_CHOICES
 print "Students who did not get any of their choices =", STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED
 print "------------------------------------------------"
 print "GRADER ASSIGNMENT COUNTS:"
-for grader in GRADERS.keys():
+SORTED_GRADERS_LIST = sorted(GRADERS.keys(), key=lambda x: int(x.split('Team ')[1].split(':')[0]))
+
+for grader in SORTED_GRADERS_LIST:
 	current_count = len(GRADERS[grader]["students"])
 	print grader, ":", current_count
 
@@ -165,7 +161,7 @@ wb = Workbook()
 ws = wb.active
 wb.remove_sheet(ws)
 
-for grader in sorted(GRADERS.keys(), key=lambda x: int(x.split('Team ')[1].split(':')[0])):
+for grader in SORTED_GRADERS_LIST:
 	# create new sheet
 	team, grader_names = grader.split(':')
 	ws = wb.create_sheet(title=team)
