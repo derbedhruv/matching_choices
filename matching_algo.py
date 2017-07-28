@@ -160,7 +160,18 @@ print "------------------------------------------------"
 
 # Now will randomly assign the remaining students to graders
 # until all students in the MASTER LIST have been completed
+STUDENTS_WHO_HAD_NO_PREFERENCE = [student for student in STUDENT_GRADER if STUDENT_GRADER[student] == None]
+print "Now assigning the remaining", len(STUDENTS_WHO_HAD_NO_PREFERENCE), "students who didn't fill the form"
 
+for student in STUDENTS_WHO_HAD_NO_PREFERENCE:
+	# make a list of graders based on who has spots left
+	REMAINING_GRADERS_LIST = [grader for grader in GRADERS if len(GRADERS[grader]["students"]) < GRADERS[grader]["limit"]]
+
+	# choose one grader from this list randomly
+	RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
+
+	# assign this student to this grader, continue
+	assign((student, ""), RANDOMLY_CHOSEN_GRADER)
 
 print "GRADER ASSIGNMENT COUNTS:"
 SORTED_GRADERS_LIST = sorted(GRADERS.keys(), key=lambda x: int(x.split('Choice ')[1].split(':')[0]))
