@@ -27,6 +27,7 @@ GRADER_LIST_FILE = "graders.txt"
 
 # master list of students
 STUDENT_MASTER_LIST_FILE = "students_master_list_2017.txt"
+STUDENT_NAME_EMAIL_MAP_FILE = "student_name_email_mapping.csv"
 
 CSV_NAME = "2017_choices_after_Tom_chose_his_manually.csv"		# change to whatever's appropriate
 OUTPUT_FILENAME = 'E145_grader_assignments_2017.xlsx'
@@ -37,14 +38,14 @@ def log(message):
 	if VERBOSE:
 		print ' '.join([str(m) for m in message])
 
-def assign(student_info, grader):
+def assign(student_email, grader):
 	# assign student to grader. 
 	# student_info is the tuple (SUID, STUDENT_NAME)
 	# grader is the grader team name - it should be one of the keys of the GRADER dict
 	assert grader in GRADERS.keys()
-	GRADERS[grader]["students"].append(student_info)
-	STUDENT_GRADER[student_info[0]] = grader
-	log(["Assigned", student_info[0], "to grader", grader])
+	GRADERS[grader]["students"].append(student_email)
+	STUDENT_GRADER[student_email] = grader
+	log(["Assigned", student_email, "to grader", grader])
 
 def read_from_file(filename, delimiter=None):
 	# reads a file with a string on each line
@@ -60,12 +61,11 @@ GRADER_CHOICE_LIST = read_from_file(GRADER_CHOICE_LIST_FILE)
 EXCLUDED_GRADERS_LIST = read_from_file(EXCLUDED_GRADERS_LIST_FILE)
 
 SUID = "Email Address"
-STUDENT_NAME = "What is your Name?"
 STUDENT_MASTER_LIST = read_from_file(STUDENT_MASTER_LIST_FILE, delimiter=',')
 
 # create a dictionary which will map student email address => grader
 STUDENT_GRADER = {x:y if y != '' else None for (x,y) in  STUDENT_MASTER_LIST}
-print STUDENT_GRADER
+STUDENT_NAME_EMAIL = {email:name.replace('"', '') for (name, email) in read_from_file(STUDENT_NAME_EMAIL_MAP_FILE, delimiter='",')}
 
 DEFAULT_STUDENT_LIMIT = 17 # the default limit on the number of students for a particular grader team
 
@@ -89,7 +89,7 @@ TOTAL_STUDENTS = 0
 for student in STUDENT_GRADER:
 	grader = STUDENT_GRADER[student]
 	if grader is not None:
-		assign((student, ""), grader.strip())
+		assign(student, grader.strip())
 
 # read in data
 data = pandas.read_csv(CSV_NAME, parse_dates=["Timestamp"])
@@ -128,7 +128,7 @@ for index, row in data.iterrows():
 		# keep incrementing till you have a grader with spots left
 		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) < GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
 			# this grader HAS spots left. assign to this, and move onto next student.
-			assign((row[SUID], row[STUDENT_NAME]), row[GRADER_CHOICE_LIST[choice_index]])
+			assign(row[SUID], row[GRADER_CHOICE_LIST[choice_index]])
 			STUDENTS_WHO_GOT_THEIR_CHOICES += 1
 			assignment_completed = True
 			break
@@ -143,9 +143,6 @@ for index, row in data.iterrows():
 		# 2. the ones who don't have spots left
 		# 
 		# assign randomly to one of these.
-
-		# log([index, ".", row[STUDENT_NAME], "will have to have some random grader assigned!"])
-
 		EXCLUDED_GRADERS = [GRADERS[row[EXCLUDED_GRADERS_LIST[j]]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])]
 		EXCLUDED_GRADERS += [grader for grader in GRADERS if len(GRADERS[grader]["students"]) == GRADERS[grader]["limit"]]
 		# log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
@@ -155,7 +152,7 @@ for index, row in data.iterrows():
 
 		# choose one of the remaining graders randomly, and assign
 		RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
-		assign((row[SUID], row[STUDENT_NAME]), RANDOMLY_CHOSEN_GRADER)
+		assign(row[SUID], RANDOMLY_CHOSEN_GRADER)
 		STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED += 1
 
 print "COMPLETED ASSIGNMENTS! Here's the overview:"
@@ -178,7 +175,7 @@ for student in STUDENTS_WHO_HAD_NO_PREFERENCE:
 	RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
 
 	# assign this student to this grader, continue
-	assign((student, ""), RANDOMLY_CHOSEN_GRADER)
+	assign(student, RANDOMLY_CHOSEN_GRADER)
 
 print "GRADER ASSIGNMENT COUNTS:"
 SORTED_GRADERS_LIST = sorted(GRADERS.keys(), key=lambda x: int(x.split('Choice ')[1].split(':')[0]))
@@ -200,7 +197,7 @@ for grader in SORTED_GRADERS_LIST:
 	ws.append(("Email", "STUDENT NAME"))
 
 	for student in GRADERS[grader]["students"]:
-		ws.append(student)
+		ws.append((student, STUDENT_NAME_EMAIL[student]))
 
 wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME))
 print "Succesfully written assignments to", OUTPUT_FILENAME
