@@ -26,7 +26,7 @@ EXCLUDED_GRADERS_LIST_FILE = "excluded_grader_choices_text.txt"
 GRADER_LIST_FILE = "graders.txt"
 
 # master list of students
-STUDENT_MASTER_LIST = "students_master_list_2017.txt"
+STUDENT_MASTER_LIST_FILE = "students_master_list_2017.txt"
 
 CSV_NAME = "2017_choices_after_Tom_chose_his_manually.csv"		# change to whatever's appropriate
 OUTPUT_FILENAME = 'E145_grader_assignments_2017.xlsx'
@@ -43,6 +43,7 @@ def assign(student_info, grader):
 	# grader is the grader team name - it should be one of the keys of the GRADER dict
 	assert grader in GRADERS.keys()
 	GRADERS[grader]["students"].append(student_info)
+	STUDENT_GRADER[student_info[0]] = grader
 	log(["Assigned", index, ".", student_info[1], "to grader", grader])
 
 def read_from_file(filename, delimiter=None):
@@ -60,6 +61,10 @@ EXCLUDED_GRADERS_LIST = read_from_file(EXCLUDED_GRADERS_LIST_FILE)
 
 SUID = "Email Address"
 STUDENT_NAME = "What is your Name?"
+STUDENT_MASTER_LIST = read_from_file(STUDENT_MASTER_LIST_FILE)
+
+# create a dictionary which will map student email address => grader
+STUDENT_GRADER = {x:None for x in  STUDENT_MASTER_LIST}
 
 DEFAULT_STUDENT_LIMIT = 17 # the default limit on the number of students for a particular grader team
 
@@ -84,7 +89,7 @@ data = pandas.read_csv(CSV_NAME, parse_dates=["Timestamp"])
 
 # only take the last entry by timestamp.
 # group by SUID, take last
-data = data.groupby('What is your SUID?').last().reset_index()
+data = data.groupby(SUID).last().reset_index()
 
 # OPTION 1: randomize 
 # ref: https://stackoverflow.com/questions/29576430/shuffle-dataframe-rows
@@ -148,10 +153,15 @@ for index, row in data.iterrows():
 
 print "COMPLETED ASSIGNMENTS! Here's the overview:"
 print "------------------------------------------------"
-print "Total students =", TOTAL_STUDENTS
+print "Total students who made choices =", TOTAL_STUDENTS
 print "Students who got one of their choices =", STUDENTS_WHO_GOT_THEIR_CHOICES
 print "Students who did not get any of their choices =", STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED
 print "------------------------------------------------"
+
+# Now will randomly assign the remaining students to graders
+# until all students in the MASTER LIST have been completed
+
+
 print "GRADER ASSIGNMENT COUNTS:"
 SORTED_GRADERS_LIST = sorted(GRADERS.keys(), key=lambda x: int(x.split('Choice ')[1].split(':')[0]))
 
@@ -169,7 +179,7 @@ for grader in SORTED_GRADERS_LIST:
 	_, grader_names = grader.split(':')
 	ws = wb.create_sheet(title=grader_names)
 	ws.append((grader, ))
-	ws.append(("SUID", "STUDENT NAME"))
+	ws.append(("Email", "STUDENT NAME"))
 
 	for student in GRADERS[grader]["students"]:
 		ws.append(student)
