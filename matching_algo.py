@@ -44,7 +44,7 @@ def assign(student_info, grader):
 	assert grader in GRADERS.keys()
 	GRADERS[grader]["students"].append(student_info)
 	STUDENT_GRADER[student_info[0]] = grader
-	log(["Assigned", index, ".", student_info[1], "to grader", grader])
+	log(["Assigned", student_info[0], "to grader", grader])
 
 def read_from_file(filename, delimiter=None):
 	# reads a file with a string on each line
@@ -61,10 +61,11 @@ EXCLUDED_GRADERS_LIST = read_from_file(EXCLUDED_GRADERS_LIST_FILE)
 
 SUID = "Email Address"
 STUDENT_NAME = "What is your Name?"
-STUDENT_MASTER_LIST = read_from_file(STUDENT_MASTER_LIST_FILE)
+STUDENT_MASTER_LIST = read_from_file(STUDENT_MASTER_LIST_FILE, delimiter=',')
 
 # create a dictionary which will map student email address => grader
-STUDENT_GRADER = {x:None for x in  STUDENT_MASTER_LIST}
+STUDENT_GRADER = {x:y if y != '' else None for (x,y) in  STUDENT_MASTER_LIST}
+print STUDENT_GRADER
 
 DEFAULT_STUDENT_LIMIT = 17 # the default limit on the number of students for a particular grader team
 
@@ -83,6 +84,12 @@ for g in GRADERS_MASTER_LIST:
 STUDENTS_WHO_GOT_THEIR_CHOICES = 0
 STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED = 0
 TOTAL_STUDENTS = 0
+
+# Now pre-assign the students who had been pre-selected
+for student in STUDENT_GRADER:
+	grader = STUDENT_GRADER[student]
+	if grader is not None:
+		assign((student, ""), grader.strip())
 
 # read in data
 data = pandas.read_csv(CSV_NAME, parse_dates=["Timestamp"])
