@@ -25,8 +25,8 @@ GRADER_CHOICE_LIST_FILE = "grader_choices_text.txt"
 EXCLUDED_GRADERS_LIST_FILE = "excluded_grader_choices_text.txt"
 GRADER_LIST_FILE = "graders.txt"
 
-CSV_NAME = "sample.csv"		# change to whatever's appropriate
-OUTPUT_FILENAME = 'E145_grader_assignments_test.xlsx'
+CSV_NAME = "2017_choices_after_Tom_chose_his_manually.csv"		# change to whatever's appropriate
+OUTPUT_FILENAME = 'E145_grader_assignments_2017.xlsx'
 ######################################################
 
 def log(message):
@@ -55,10 +55,10 @@ def read_from_file(filename, delimiter=None):
 GRADER_CHOICE_LIST = read_from_file(GRADER_CHOICE_LIST_FILE)
 EXCLUDED_GRADERS_LIST = read_from_file(EXCLUDED_GRADERS_LIST_FILE)
 
-SUID = "What is your SUID?"
-STUDENT_NAME = "What is your name?"
+SUID = "Email Address"
+STUDENT_NAME = "What is your Name?"
 
-DEFAULT_STUDENT_LIMIT = 4 # the default limit on the number of students for a particular grader team
+DEFAULT_STUDENT_LIMIT = 17 # the default limit on the number of students for a particular grader team
 
 # this is a list of the choices for graders, MUST BE FILLED BEFOREHAND
 # mapping grader strings => {"students" : list of students, "limit": the upper limit of the number of students they can take}
@@ -150,7 +150,7 @@ print "Students who got one of their choices =", STUDENTS_WHO_GOT_THEIR_CHOICES
 print "Students who did not get any of their choices =", STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED
 print "------------------------------------------------"
 print "GRADER ASSIGNMENT COUNTS:"
-SORTED_GRADERS_LIST = sorted(GRADERS.keys(), key=lambda x: int(x.split('Team ')[1].split(':')[0]))
+SORTED_GRADERS_LIST = sorted(GRADERS.keys(), key=lambda x: int(x.split('Choice ')[1].split(':')[0]))
 
 for grader in SORTED_GRADERS_LIST:
 	current_count = len(GRADERS[grader]["students"])
@@ -163,8 +163,8 @@ wb.remove_sheet(ws)
 
 for grader in SORTED_GRADERS_LIST:
 	# create new sheet
-	team, grader_names = grader.split(':')
-	ws = wb.create_sheet(title=team)
+	_, grader_names = grader.split(':')
+	ws = wb.create_sheet(title=grader_names)
 	ws.append((grader, ))
 	ws.append(("SUID", "STUDENT NAME"))
 
