@@ -25,6 +25,9 @@ GRADER_CHOICE_LIST_FILE = "grader_choices_text.txt"
 EXCLUDED_GRADERS_LIST_FILE = "excluded_grader_choices_text.txt"
 GRADER_LIST_FILE = "graders.txt"
 
+# master list of students
+STUDENT_MASTER_LIST = "students_master_list_2017.txt"
+
 CSV_NAME = "2017_choices_after_Tom_chose_his_manually.csv"		# change to whatever's appropriate
 OUTPUT_FILENAME = 'E145_grader_assignments_2017.xlsx'
 ######################################################
