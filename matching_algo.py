@@ -16,6 +16,8 @@ EDGE CASES:
 import pandas, random, os
 from openpyxl import Workbook
 
+random.seed(42)
+
 ############## USER-CONTROLLED OPTIONS ###############
 VERBOSE = False		# verbose print what's going on
 RANDOMIZE_STUDENTS = False	# randomize the students before assigning (lottery system)
@@ -112,6 +114,11 @@ if RANDOMIZE_STUDENTS:
 
 for index, row in data.iterrows():
 	TOTAL_STUDENTS += 1
+
+	# if the student has already been pre-assigned, skip
+	if STUDENT_GRADER[row[SUID]] != None:
+		STUDENTS_WHO_GOT_THEIR_CHOICES += 1
+		continue
 	
 	choice_index = 0	# pointer for their choice index
 	assignment_completed = False	# used to check if this student was assigned preferred grader. If not, 
@@ -143,12 +150,16 @@ for index, row in data.iterrows():
 		# 2. the ones who don't have spots left
 		# 
 		# assign randomly to one of these.
-		EXCLUDED_GRADERS = [GRADERS[row[EXCLUDED_GRADERS_LIST[j]]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])]
-		EXCLUDED_GRADERS += [grader for grader in GRADERS if len(GRADERS[grader]["students"]) == GRADERS[grader]["limit"]]
+		EXCLUDED_GRADERS = [row[EXCLUDED_GRADERS_LIST[j]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])] 
+		EXCLUDED_GRADERS += [grader for grader in GRADERS.keys() if len(GRADERS[grader]["students"]) == GRADERS[grader]["limit"]]
 		# log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
 		# log(["no of exclusions specified:", len(EXCLUDED_GRADERS)])
+		# print "excluded graders for", row[SUID], "--->", EXCLUDED_GRADERS
 
 		REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in EXCLUDED_GRADERS])
+
+
+		print "Choosing from", REMAINING_GRADERS_LIST, "for", row[SUID]
 
 		# choose one of the remaining graders randomly, and assign
 		RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
@@ -188,6 +199,8 @@ for grader in SORTED_GRADERS_LIST:
 wb = Workbook()
 ws = wb.active
 wb.remove_sheet(ws)
+
+# print GRADERS
 
 for grader in SORTED_GRADERS_LIST:
 	# create new sheet
