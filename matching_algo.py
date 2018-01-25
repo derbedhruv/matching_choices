@@ -59,6 +59,11 @@ def read_from_file(filename, delimiter=None):
 		return [y.strip() for y in x]
 	return [y.strip().split(delimiter) for y in x]
 
+def grader_has_spots_open(gname):
+	# gname - string
+	# can this grader take any more students?
+	return len(GRADERS[gname]["students"]) < GRADERS[gname]["limit"]
+
 GRADER_CHOICE_LIST = read_from_file(GRADER_CHOICE_LIST_FILE)
 EXCLUDED_GRADERS_LIST = read_from_file(EXCLUDED_GRADERS_LIST_FILE)
 
@@ -67,7 +72,7 @@ STUDENT_MASTER_LIST = read_from_file(STUDENT_MASTER_LIST_FILE, delimiter=',')
 
 # create a dictionary which will map student email address => grader
 STUDENT_GRADER = {x:y if y != '' else None for (x,y) in  STUDENT_MASTER_LIST}
-STUDENT_NAME_EMAIL = {email:name.replace('"', '') for (name, email) in read_from_file(STUDENT_NAME_EMAIL_MAP_FILE, delimiter='",')}
+STUDENT_NAME_EMAIL = {email:name.replace('"', '') for (name, email) in read_from_file(STUDENT_NAME_EMAIL_MAP_FILE, delimiter='", ')}
 
 DEFAULT_STUDENT_LIMIT = 17 # the default limit on the number of students for a particular grader team
 
@@ -111,106 +116,120 @@ if RANDOMIZE_STUDENTS:
 # PRE-ASSIGNMENTS
 # In the case that some students have been preferentially
 # allotted to certain grading teams, then they can be entered here
+if __name__ == "__main__":
+	for index, row in data.iterrows():
+		TOTAL_STUDENTS += 1
 
-for index, row in data.iterrows():
-	TOTAL_STUDENTS += 1
-
-	# if the student has already been pre-assigned, skip
-	if STUDENT_GRADER[row[SUID]] != None:
-		STUDENTS_WHO_GOT_THEIR_CHOICES += 1
-		continue
-	
-	choice_index = 0	# pointer for their choice index
-	assignment_completed = False	# used to check if this student was assigned preferred grader. If not, 
-	NUMBER_OF_CHOICES_SPECIFIED = sum([1 for j in range(len(GRADER_CHOICE_LIST)) if not pandas.isnull(row[GRADER_CHOICE_LIST[j]])])	# number of choices this student has specified, upto a max possible of 5
-
-	# while you still have specified choices left, 
-	# iterate over the choices specified
-	# and see if you still have spots left
-	while choice_index < NUMBER_OF_CHOICES_SPECIFIED:
-		if pandas.isnull(row[GRADER_CHOICE_LIST[choice_index]]):
-			# if this choice is null, we've reached the end of the choices. leave the loop.
-			break
-
-		# keep incrementing till you have a grader with spots left
-		if len(GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["students"]) < GRADERS[row[GRADER_CHOICE_LIST[choice_index]]]["limit"]:
-			# this grader HAS spots left. assign to this, and move onto next student.
-			assign(row[SUID], row[GRADER_CHOICE_LIST[choice_index]])
+		# if the student has already been pre-assigned, skip
+		if STUDENT_GRADER[row[SUID]] != None:
 			STUDENTS_WHO_GOT_THEIR_CHOICES += 1
-			assignment_completed = True
-			break
-		else:
-			# this grader goes NOT have spots left. Try next.
-			choice_index += 1
+			continue
+		
+		choice_index = 0	# pointer for their choice index
+		assignment_completed = False	# used to check if this student was assigned preferred grader. If not, 
+		NUMBER_OF_CHOICES_SPECIFIED = sum([1 for j in range(len(GRADER_CHOICE_LIST)) if not pandas.isnull(row[GRADER_CHOICE_LIST[j]])])	# number of choices this student has specified, upto a max possible of 5
 
-	if not assignment_completed:
-		# if you've reached here, that means none of the top 5 choices had any spots left
-		# create a set of the remaining graders, excluding:
-		# 1. the ones the student doesn't want
-		# 2. the ones who don't have spots left
-		# 
-		# assign randomly to one of these.
-		EXCLUDED_GRADERS = [row[EXCLUDED_GRADERS_LIST[j]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])] 
-		EXCLUDED_GRADERS += [grader for grader in GRADERS.keys() if len(GRADERS[grader]["students"]) == GRADERS[grader]["limit"]]
-		# log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
-		# log(["no of exclusions specified:", len(EXCLUDED_GRADERS)])
-		# print "excluded graders for", row[SUID], "--->", EXCLUDED_GRADERS
+		# while you still have specified choices left, 
+		# iterate over the choices specified
+		# and see if you still have spots left
+		while choice_index < NUMBER_OF_CHOICES_SPECIFIED:
+			if pandas.isnull(row[GRADER_CHOICE_LIST[choice_index]]):
+				# if this choice is null, we've reached the end of the choices. leave the loop.
+				break
 
-		REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in EXCLUDED_GRADERS])
+			# Check if the type of choice is a grader pair!
+			if row[GRADER_CHOICE_LIST[choice_index]][:11] == "Grader Pair":
+				# if so, assign to BOTH graders only if BOTH have spots open!
+				# This is because the string is of the form --> 'Grader Pair 7: grader name1 and grader name2'
+				grader_pair = row[GRADER_CHOICE_LIST[choice_index]][15:].split(' and ')
+				if grader_has_spots_open(grader_pair[0]) and grader_has_spots_open(grader_pair[1]):
+					assign(row[SUID], grader_pair[0])
+					assign(row[SUID], grader_pair[1])
+
+					STUDENTS_WHO_GOT_THEIR_CHOICES += 1
+					assignment_completed = True
+					break
+				else:
+					choice_index += 1
+
+			# keep incrementing till you have a grader with spots left
+			elif grader_has_spots_open(row[GRADER_CHOICE_LIST[choice_index]]):
+				# this grader HAS spots left. assign to this, and move onto next student.
+				assign(row[SUID], row[GRADER_CHOICE_LIST[choice_index]])
+				STUDENTS_WHO_GOT_THEIR_CHOICES += 1
+				assignment_completed = True
+				break
+			else:
+				# this grader goes NOT have spots left. Try next.
+				choice_index += 1
+
+		if not assignment_completed:
+			# if you've reached here, that means none of the top 5 choices had any spots left
+			# create a set of the remaining graders, excluding:
+			# 1. the ones the student doesn't want
+			# 2. the ones who don't have spots left
+			# 
+			# assign randomly to one of these.
+			EXCLUDED_GRADERS = [row[EXCLUDED_GRADERS_LIST[j]] for j in range(len(EXCLUDED_GRADERS_LIST)) if not pandas.isnull(row[EXCLUDED_GRADERS_LIST[j]])] 
+			EXCLUDED_GRADERS += [grader for grader in GRADERS.keys() if len(GRADERS[grader]["students"]) == GRADERS[grader]["limit"]]
+			# log(["no of choices specified:", NUMBER_OF_CHOICES_SPECIFIED])
+			# log(["no of exclusions specified:", len(EXCLUDED_GRADERS)])
+			# print "excluded graders for", row[SUID], "--->", EXCLUDED_GRADERS
+
+			REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in EXCLUDED_GRADERS])
 
 
-		print "Choosing from", REMAINING_GRADERS_LIST, "for", row[SUID]
+			print "Choosing from", REMAINING_GRADERS_LIST, "for", row[SUID]
 
-		# choose one of the remaining graders randomly, and assign
+			# choose one of the remaining graders randomly, and assign
+			RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
+			assign(row[SUID], RANDOMLY_CHOSEN_GRADER)
+			STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED += 1
+
+	print "COMPLETED ASSIGNMENTS! Here's the overview:"
+	print "------------------------------------------------"
+	print "Total students who made choices =", TOTAL_STUDENTS
+	print "Students who got one of their choices =", STUDENTS_WHO_GOT_THEIR_CHOICES
+	print "Students who did not get any of their choices =", STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED
+	print "------------------------------------------------"
+
+	# Now will randomly assign the remaining students to graders
+	# until all students in the MASTER LIST have been completed
+	STUDENTS_WHO_HAD_NO_PREFERENCE = [student for student in STUDENT_GRADER if STUDENT_GRADER[student] == None]
+	print "Now assigning the remaining", len(STUDENTS_WHO_HAD_NO_PREFERENCE), "students who didn't fill the form"
+
+	for student in STUDENTS_WHO_HAD_NO_PREFERENCE:
+		# make a list of graders based on who has spots left
+		REMAINING_GRADERS_LIST = [grader for grader in GRADERS if len(GRADERS[grader]["students"]) < GRADERS[grader]["limit"]]
+
+		# choose one grader from this list randomly
 		RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
-		assign(row[SUID], RANDOMLY_CHOSEN_GRADER)
-		STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED += 1
 
-print "COMPLETED ASSIGNMENTS! Here's the overview:"
-print "------------------------------------------------"
-print "Total students who made choices =", TOTAL_STUDENTS
-print "Students who got one of their choices =", STUDENTS_WHO_GOT_THEIR_CHOICES
-print "Students who did not get any of their choices =", STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED
-print "------------------------------------------------"
+		# assign this student to this grader, continue
+		assign(student, RANDOMLY_CHOSEN_GRADER)
 
-# Now will randomly assign the remaining students to graders
-# until all students in the MASTER LIST have been completed
-STUDENTS_WHO_HAD_NO_PREFERENCE = [student for student in STUDENT_GRADER if STUDENT_GRADER[student] == None]
-print "Now assigning the remaining", len(STUDENTS_WHO_HAD_NO_PREFERENCE), "students who didn't fill the form"
+	print "GRADER ASSIGNMENT COUNTS:"
+	SORTED_GRADERS_LIST = sorted(GRADERS.keys())
 
-for student in STUDENTS_WHO_HAD_NO_PREFERENCE:
-	# make a list of graders based on who has spots left
-	REMAINING_GRADERS_LIST = [grader for grader in GRADERS if len(GRADERS[grader]["students"]) < GRADERS[grader]["limit"]]
+	for grader in SORTED_GRADERS_LIST:
+		current_count = len(GRADERS[grader]["students"])
+		print grader, ":", current_count
 
-	# choose one grader from this list randomly
-	RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
+	# write out to workbook
+	wb = Workbook()
+	ws = wb.active
+	wb.remove_sheet(ws)
 
-	# assign this student to this grader, continue
-	assign(student, RANDOMLY_CHOSEN_GRADER)
+	# print GRADERS
 
-print "GRADER ASSIGNMENT COUNTS:"
-SORTED_GRADERS_LIST = sorted(GRADERS.keys(), key=lambda x: int(x.split('Choice ')[1].split(':')[0]))
+	for grader in SORTED_GRADERS_LIST:
+		# create new sheet
+		ws = wb.create_sheet(title=grader)
+		ws.append((grader, ))
+		ws.append(("Email", "STUDENT NAME"))
 
-for grader in SORTED_GRADERS_LIST:
-	current_count = len(GRADERS[grader]["students"])
-	print grader, ":", current_count
+		for student in GRADERS[grader]["students"]:
+			ws.append((student, STUDENT_NAME_EMAIL[student]))
 
-# write out to workbook
-wb = Workbook()
-ws = wb.active
-wb.remove_sheet(ws)
-
-# print GRADERS
-
-for grader in SORTED_GRADERS_LIST:
-	# create new sheet
-	_, grader_names = grader.split(':')
-	ws = wb.create_sheet(title=grader_names)
-	ws.append((grader, ))
-	ws.append(("Email", "STUDENT NAME"))
-
-	for student in GRADERS[grader]["students"]:
-		ws.append((student, STUDENT_NAME_EMAIL[student]))
-
-wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME))
-print "Succesfully written assignments to", OUTPUT_FILENAME
+	wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME))
+	print "Succesfully written assignments to", OUTPUT_FILENAME
