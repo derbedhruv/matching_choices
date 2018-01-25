@@ -1,5 +1,5 @@
 """
-Matching algorithm for grader preferences for the students of E145
+Matching algorithm for grader preferences for the students of MS&E 271
 Required - an XLSX sheet version of the google sheet of the google form that was filled by them
 
 ALGORITHM:
@@ -28,11 +28,11 @@ EXCLUDED_GRADERS_LIST_FILE = "excluded_grader_choices_text.txt"
 GRADER_LIST_FILE = "graders.txt"
 
 # master list of students
-STUDENT_MASTER_LIST_FILE = "students_master_list_2017.txt"
+STUDENT_MASTER_LIST_FILE = "students_master_list_2018.txt"	# A comma separates pre-assigned graders if they exist
 STUDENT_NAME_EMAIL_MAP_FILE = "student_name_email_mapping.csv"
 
-CSV_NAME = "2017_choices_after_Tom_chose_his_manually.csv"		# change to whatever's appropriate
-OUTPUT_FILENAME = 'E145_grader_assignments_2017.xlsx'
+CSV_NAME = "STLP_grader_preferences_GEMWIN18_Jan24_1453hrs.csv"		# change to whatever's appropriate
+OUTPUT_FILENAME = 'GEMWIN18_grader_assignments.xlsx'
 ######################################################
 
 def log(message):
