@@ -67,7 +67,7 @@ def grader_has_spots_open(gname):
 GRADER_CHOICE_LIST = read_from_file(GRADER_CHOICE_LIST_FILE)
 EXCLUDED_GRADERS_LIST = read_from_file(EXCLUDED_GRADERS_LIST_FILE)
 
-SUID = "Email Address"
+SUID = "What is your SUNetID?"
 STUDENT_MASTER_LIST = read_from_file(STUDENT_MASTER_LIST_FILE, delimiter=',')
 
 # create a dictionary which will map student email address => grader
@@ -119,6 +119,9 @@ if RANDOMIZE_STUDENTS:
 if __name__ == "__main__":
 	for index, row in data.iterrows():
 		TOTAL_STUDENTS += 1
+
+		# clean the row[SUID]
+		row[SUID] = row[SUID].strip().lower()
 
 		# if the student has already been pre-assigned, skip
 		if STUDENT_GRADER[row[SUID]] != None:
