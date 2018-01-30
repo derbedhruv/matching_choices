@@ -20,7 +20,7 @@ random.seed(42)
 
 ############## USER-CONTROLLED OPTIONS ###############
 VERBOSE = False		# verbose print what's going on
-RANDOMIZE_STUDENTS = False	# randomize the students before assigning (lottery system)
+RANDOMIZE_STUDENTS = True	# randomize the students before assigning (lottery system)
 
 # DETAILS OF THE FORM
 GRADER_CHOICE_LIST_FILE = "grader_choices_text.txt"
@@ -31,7 +31,7 @@ GRADER_LIST_FILE = "graders.txt"
 STUDENT_MASTER_LIST_FILE = "students_master_list_2018.txt"	# A comma separates pre-assigned graders if they exist
 STUDENT_NAME_EMAIL_MAP_FILE = "student_name_email_mapping.csv"
 
-CSV_NAME = "STLP_grader_preferences_GEMWIN18_Jan24_1453hrs.csv"		# change to whatever's appropriate
+CSV_NAME = "STLP_grader_preferences_GEMWIN18_Jan29_2225hrs.csv"		# change to whatever's appropriate
 OUTPUT_FILENAME = 'GEMWIN18_grader_assignments.xlsx'
 ######################################################
 
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 			if row[GRADER_CHOICE_LIST[choice_index]][:11] == "Grader Pair":
 				# if so, assign to BOTH graders only if BOTH have spots open!
 				# This is because the string is of the form --> 'Grader Pair 7: grader name1 and grader name2'
-				grader_pair = row[GRADER_CHOICE_LIST[choice_index]][15:].split(' and ')
+				grader_pair = row[GRADER_CHOICE_LIST[choice_index]].split(": ")[1].split(' and ')
 				if grader_has_spots_open(grader_pair[0]) and grader_has_spots_open(grader_pair[1]):
 					assign(row[SUID], grader_pair[0])
 					assign(row[SUID], grader_pair[1])
@@ -181,11 +181,12 @@ if __name__ == "__main__":
 
 			REMAINING_GRADERS_LIST = set([grader for grader in GRADERS.keys() if grader not in EXCLUDED_GRADERS])
 
+			# print "Choosing from", REMAINING_GRADERS_LIST, "for", row[SUID]
 
-			print "Choosing from", REMAINING_GRADERS_LIST, "for", row[SUID]
-
-			# choose one of the remaining graders randomly, and assign
-			RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
+			# sort graders in ascending order of how many students they already have,
+			# choose the first - this will ensure that no grader ends up with no assignments
+			# RANDOMLY_CHOSEN_GRADER = random.sample(REMAINING_GRADERS_LIST, 1)[0]
+			RANDOMLY_CHOSEN_GRADER = sorted(REMAINING_GRADERS_LIST, key = lambda x: len(GRADERS[x]["students"]))[0]
 			assign(row[SUID], RANDOMLY_CHOSEN_GRADER)
 			STUDENTS_WHO_HAD_TO_BE_RANDOMLY_ASSIGNED += 1
 
@@ -211,9 +212,11 @@ if __name__ == "__main__":
 		# assign this student to this grader, continue
 		assign(student, RANDOMLY_CHOSEN_GRADER)
 
-	print "GRADER ASSIGNMENT COUNTS:"
 	SORTED_GRADERS_LIST = sorted(GRADERS.keys())
 
+	print "NOTE: Graders who didn't get any STLPs assigned to them: ", [grader for grader in SORTED_GRADERS_LIST if len(GRADERS[grader]["students"]) == 0]
+	print "TOTAL STLPs THAT HAVE TO BE CHECKED: ", sum([len(GRADERS[grader]["students"]) for grader in SORTED_GRADERS_LIST])
+	print "GRADER ASSIGNMENT COUNTS:"
 	for grader in SORTED_GRADERS_LIST:
 		current_count = len(GRADERS[grader]["students"])
 		print grader, ":", current_count
