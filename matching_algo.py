@@ -12,6 +12,11 @@ ALGORITHM:
 EDGE CASES:
 - if someone enters multiple choices, take the one with the latest timestamp
 - if someone has not entered all 5 grader choices or all 3 exclusion choices
+
+TODO:
+- Generate the sheet which has student names ---> grader assigned
+- Create a verification script that checks this^ sheet for correctness
+
 """
 import pandas, random, os
 from openpyxl import Workbook
