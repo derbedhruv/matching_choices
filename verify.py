@@ -32,14 +32,14 @@ if __name__ == "__main__":
 		grader_top5 = [student_choice_row[g].tolist()[0] for g in GRADER_CHOICE_LIST]
 		excluded_graders = [student_choice_row[g].tolist()[0] for g in EXCLUDED_GRADERS_LIST]
 
+		if (assigned_grader in excluded_graders):
+			STUDENTS_WHO_GOT_BAD_GRADERS += 1
+			print "ERROR:", student["Student Name"], "got a grader who they didn't want!!!"
+
 		if (assigned_grader in grader_top5):
 			STUDENTS_WHO_GOT_THEIR_TOP5CHOICES += 1
 		else:
 			STUDENTS_WHO_GOT_RANDOM_GRADERS += 1
-
-		if (assigned_grader in excluded_graders):
-			STUDENTS_WHO_GOT_BAD_GRADERS += 1
-			print "ERROR:", student["Student Name"], "got a grader who they didn't want!!!"
 
 	# All done. Print stats
 	print STUDENTS_COUNT, "students in total"
