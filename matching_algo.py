@@ -155,6 +155,10 @@ if __name__ == "__main__":
 					assign(row[SUID], grader_pair[0])
 					assign(row[SUID], grader_pair[1])
 
+					# if a grader pair has been assigned,
+					# then we need to update this specifically for that student
+					STUDENT_GRADER[row[SUID]] = row[GRADER_CHOICE_LIST[choice_index]]
+
 					STUDENTS_WHO_GOT_THEIR_CHOICES += 1
 					assignment_completed = True
 					break
