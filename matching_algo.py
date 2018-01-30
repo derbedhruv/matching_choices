@@ -37,7 +37,8 @@ STUDENT_MASTER_LIST_FILE = "students_master_list_2018.txt"	# A comma separates p
 STUDENT_NAME_EMAIL_MAP_FILE = "student_name_email_mapping.csv"
 
 CSV_NAME = "STLP_grader_preferences_GEMWIN18_Jan29_2225hrs.csv"		# change to whatever's appropriate
-OUTPUT_FILENAME = 'GEMWIN18_grader_assignments.xlsx'
+OUTPUT_FILENAME1 = 'GEMWIN18_grader_assignments.xlsx'
+OUTPUT_FILENAME2 = 'GEMWIN18_student_assignments.xlsx'
 ######################################################
 
 def log(message):
@@ -226,7 +227,7 @@ if __name__ == "__main__":
 		current_count = len(GRADERS[grader]["students"])
 		print grader, ":", current_count
 
-	# write out to workbook
+	# write out to workbook (FOR GRADERS)
 	wb = Workbook()
 	ws = wb.active
 	wb.remove_sheet(ws)
@@ -237,10 +238,21 @@ if __name__ == "__main__":
 		# create new sheet
 		ws = wb.create_sheet(title=grader)
 		ws.append((grader, ))
-		ws.append(("Email", "STUDENT NAME"))
+		ws.append(("STUDENT NAME",))
 
 		for student in GRADERS[grader]["students"]:
-			ws.append((student, STUDENT_NAME_EMAIL[student]))
+			ws.append((STUDENT_NAME_EMAIL[student], ))
 
-	wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME))
-	print "Succesfully written assignments to", OUTPUT_FILENAME
+	wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME1))
+	print "Succesfully written grader assignments to", OUTPUT_FILENAME1
+
+	# write out to workbook (FOR STUDENTS)
+	wb = Workbook()
+	ws = wb.active
+	ws.append(("Student Name", "Email", "Assigned grader"))
+
+	for student in sorted(STUDENT_GRADER):
+		ws.append((STUDENT_NAME_EMAIL[student], "{}@stanford.edu".format(student), STUDENT_GRADER[student]))
+
+	wb.save(filename=os.path.join(os.path.dirname(os.path.abspath(__file__)), OUTPUT_FILENAME2))
+	print "Succesfully written student <--> graders to", OUTPUT_FILENAME2
